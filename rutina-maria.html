@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1D9E75">
+<title>Mi rutina</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a18;min-height:100vh}
+.app{max-width:480px;margin:0 auto;padding:0 0 80px}
+.topbar{background:#fff;border-bottom:1px solid #e5e5e0;padding:16px 20px;position:sticky;top:0;z-index:100}
+.topbar h1{font-size:18px;font-weight:600;color:#1a1a18}
+.topbar p{font-size:12px;color:#888;margin-top:2px}
+.tab-bar{display:flex;background:#fff;border-bottom:1px solid #e5e5e0;position:sticky;top:61px;z-index:99}
+.tab{flex:1;padding:12px;font-size:13px;border:none;background:transparent;cursor:pointer;color:#888;border-bottom:2px solid transparent;font-weight:500}
+.tab.active{color:#1D9E75;border-bottom-color:#1D9E75}
+.content{padding:16px}
+.month-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.m-pill{padding:10px 6px;border-radius:12px;border:1px solid #e5e5e0;cursor:pointer;text-align:center;background:#fff}
+.m-pill.active{background:#1D9E75;border-color:#1D9E75}
+.m-pill.active .m-name,.m-pill.active .m-sub{color:#fff}
+.m-name{font-size:13px;font-weight:600;color:#1a1a18}
+.m-sub{font-size:10px;color:#888;margin-top:2px}
+.month-note{background:#E1F5EE;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#085041;line-height:1.5}
+.day-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:16px}
+.d-pill{padding:10px 4px;border-radius:10px;border:1px solid #e5e5e0;cursor:pointer;text-align:center;background:#fff}
+.d-pill.active{background:#1D9E75;border-color:#1D9E75}
+.d-pill.active .d-name,.d-pill.active .d-focus{color:#fff}
+.d-pill.opt{border-style:dashed}
+.d-name{font-size:12px;font-weight:600;color:#1a1a18}
+.d-focus{font-size:10px;color:#888;margin-top:1px}
+.session-label{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.session-dot{width:7px;height:7px;border-radius:50%;background:#1D9E75}
+.ex-card{background:#fff;border-radius:14px;border:1px solid #e5e5e0;margin-bottom:10px;overflow:hidden}
+.ex-card.swapped-temp{border-color:#EF9F27}
+.ex-card.swapped-perm{border-color:#1D9E75}
+.ex-main{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.ex-num{width:26px;height:26px;border-radius:50%;border:1px solid #e5e5e0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#888;flex-shrink:0}
+.ex-body{flex:1}
+.ex-name{font-size:14px;font-weight:600;color:#1a1a18;line-height:1.3}
+.ex-card.swapped-temp .ex-name{color:#854F0B}
+.ex-card.swapped-perm .ex-name{color:#085041}
+.ex-detail{font-size:12px;color:#888;margin-top:2px}
+.ex-tempo{font-size:11px;color:#1D9E75;margin-top:3px;font-style:italic}
+.ex-fallo{font-size:11px;color:#E24B4A;margin-top:2px;font-weight:600}
+.ex-badge{font-size:10px;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:4px;font-weight:600}
+.badge-temp{background:#FAEEDA;color:#412402}
+.badge-perm{background:#E1F5EE;color:#04342C}
+.ex-arrow{font-size:18px;color:#ccc;transition:transform 0.15s;flex-shrink:0}
+.ex-arrow.open{transform:rotate(180deg)}
+.alts-panel{border-top:1px solid #f0f0ec;background:#fafaf8;padding:12px 16px;display:none}
+.alts-panel.open{display:block}
+.alts-title{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px}
+.alt-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0ec}
+.alt-row:last-child{border-bottom:none}
+.alt-info{flex:1}
+.alt-name{font-size:13px;font-weight:500;color:#1a1a18}
+.alt-why{font-size:11px;color:#888;margin-top:2px;line-height:1.4}
+.alt-btns{display:flex;gap:5px;flex-shrink:0}
+.btn-hoy{font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid #EF9F27;color:#854F0B;background:#FAEEDA;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn-siempre{font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid #1D9E75;color:#085041;background:#E1F5EE;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn-reset{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid #e5e5e0;color:#888;background:#fff;cursor:pointer;margin-top:10px;display:block;width:100%;text-align:center}
+.deload-card{background:#FAEEDA;border-radius:12px;padding:12px 14px;margin-top:10px;font-size:13px;color:#412402;line-height:1.5}
+.deload-title{font-weight:700;margin-bottom:4px}
+.eval-card{background:#E1F5EE;border-radius:12px;padding:12px 14px;margin-top:10px;font-size:13px;color:#085041;line-height:1.5}
+.goal{font-size:11px;color:#1D9E75;font-weight:700;margin-top:3px}
+.hist-section-title{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.06em;margin:16px 0 10px}
+.hist-card{border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid}
+.hist-card.perm{background:#E1F5EE;border-color:#1D9E75}
+.hist-card.temp{background:#FAEEDA;border-color:#EF9F27}
+.hist-day{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px}
+.hist-card.perm .hist-day{color:#0F6E56}
+.hist-card.temp .hist-day{color:#854F0B}
+.hist-name{font-size:14px;font-weight:600}
+.hist-card.perm .hist-name{color:#085041}
+.hist-card.temp .hist-name{color:#633806}
+.hist-orig{font-size:12px;color:#888;margin-top:2px}
+.empty{text-align:center;padding:40px 0;color:#aaa;font-size:14px}
+.badge-block{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em}
+.badge-base{background:#E1F5EE;color:#085041}
+.badge-rot{background:#EEEDFE;color:#26215C}
+.badge-fuerza{background:#FAECE7;color:#4A1B0C}
+.badge-cierre{background:#E6F1FB;color:#042C53}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <h1>Mi rutina</h1>
+    <p>Estilo Lia Olite · Lucía Aguado · Sep → Dic</p>
+  </div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="setTab('plan',this)">Plan mensual</button>
+    <button class="tab" onclick="setTab('rutina',this)">Rutina del día</button>
+    <button class="tab" onclick="setTab('cambios',this)">Cambios</button>
+  </div>
+  <div class="content">
+    <div id="view-plan"></div>
+    <div id="view-rutina" style="display:none"></div>
+    <div id="view-cambios" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+const MONTHS = {
+  sep:{label:'Sep',sub:'Base',badge:'base',
+    note:'El desafío viene del tempo y del fallo real, no del número. Respetá los segundos y llegá cerca del fallo en la última serie de cada ejercicio ancla.',
+    days:{
+      lun:{label:'Glúteos e isquios — fuerza',exs:[
+        {n:'Hip thrust en Smith',d:'4 series · 8-10 reps',t:'Contraer 2 seg arriba · bajar en 3',f:'Últimas 2 series al fallo técnico',
+          alts:[{n:'Hip thrust con barra',w:'Más carga posible · mismo tempo'},{n:'Hip thrust con mancuerna en banco',w:'Si Smith ocupado · hasta 30kg'},{n:'Puente de glúteo en suelo con disco',w:'Sin rack · foco en contracción'}]},
+        {n:'PMR con mancuernas',d:'3 series · 8-10 reps',t:'Bajar en 4 seg · subir controlado',f:'Serie 3 al fallo',
+          alts:[{n:'PMR con barra',w:'Mayor carga posible a largo plazo'},{n:'Buenos días con barra',w:'Mismo patrón bisagra · más carga'},{n:'Hip hinge en polea baja',w:'Tensión constante · más amigable con espalda'}]},
+        {n:'Curl femoral unilateral en máquina',d:'3 series · 10-12 reps c/pierna',t:'Contraer 2 seg · bajar en 3',f:'Cerca del fallo',
+          alts:[{n:'Curl femoral bilateral',w:'Más carga total · si no hay unilateral'},{n:'Curl nórdico asistido',w:'Excéntrico muy potente'},{n:'Peso muerto a una pierna',w:'Unilateral · activa isquio y glúteo'}]},
+        {n:'Abducción en máquina',d:'3 series · 10-12 reps',t:'Contraer 2 seg en cada rep',f:'Serie 3 al fallo',
+          alts:[{n:'Patada lateral en polea baja',w:'Más rango que la máquina'},{n:'Abducción en polea baja de pie',w:'Tensión constante · rango amplio'},{n:'Sentadilla sumo con mancuerna',w:'Aductores y glúteo medio juntos'}]},
+        {n:'Patada sprinter en polea',d:'3 series · 10-12 reps c/pierna',t:'Subir muy controlado · sin impulso',f:'Última serie al fallo',
+          alts:[{n:'Patada de glúteo estándar en polea',w:'Más fácil de ejecutar · misma cadena'},{n:'Extensión de cadera en máquina',w:'Si hay máquina · más carga'},{n:'Patada en colchoneta con tobillera',w:'Sin polea · 3 variantes seguidas'}]}
+      ]},
+      mar:{label:'Espalda y bíceps',exs:[
+        {n:'Jalón en polea agarre supino',d:'4 series · 8-10 reps',t:'Bajar en 2 · contraer 1 seg abajo',f:'Últimas 2 series al fallo técnico',
+          alts:[{n:'Jalón agarre prono',w:'Más dorsal · menos bíceps'},{n:'Jalón agarre neutro',w:'Posición intermedia'},{n:'Dominada asistida en máquina',w:'Peso corporal · mismo patrón'}]},
+        {n:'Remo en polea alta agarre supino',d:'3 series · 10-12 reps',t:'Codo pegado · contraer atrás',f:'Serie 3 al fallo',
+          alts:[{n:'Remo en polea alta agarre prono',w:'Varía el ángulo de tracción'},{n:'Remo en polea baja agarre supino',w:'Ángulo diferente · más romboides'},{n:'Remo en máquina sentado',w:'Más estabilidad · útil al final'}]},
+        {n:'Remo con mancuerna a una mano',d:'3 series · 10-12 reps c/brazo',t:'Rango completo · no rotar cadera',f:'Cerca del fallo',
+          alts:[{n:'Remo con mancuerna apoyado en banco',w:'Más estabilidad · más rango'},{n:'Remo en polea baja a una mano',w:'Tensión constante'},{n:'Remo en máquina unilateral',w:'Si hay máquina · más carga'}]},
+        {n:'Peck deck inverso',d:'3 series · 12-15 reps',t:'Contraer 2 seg atrás',f:'Serie 3 al fallo',
+          alts:[{n:'Pájaros con mancuernas inclinado',w:'Más rango de movimiento'},{n:'Reverse fly en polea cruzada',w:'Tensión constante'},{n:'Face pull en polea con cuerda',w:'Deltoides posterior + manguito'}]},
+        {n:'Curl en polea baja con barra',d:'3 series · 10-12 reps',t:'Bajar en 3 seg · sin soltar tensión',f:'Última serie al fallo',
+          alts:[{n:'Curl alterno con mancuernas',w:'Unilateral · más rango'},{n:'Curl con barra Z',w:'Menos tensión en muñeca'},{n:'Curl concentrado con mancuerna',w:'Máximo aislamiento'}]}
+      ]},
+      mie:{label:'Cuádriceps y glúteos — volumen',exs:[
+        {n:'Sentadilla hack en Smith stance amplio',d:'4 series · 8-10 reps',t:'Bajar en 3 seg · pausa 1 seg abajo',f:'Últimas 2 series al fallo técnico',
+          alts:[{n:'Sentadilla en Smith posición normal',w:'Menos glúteo · más cuádriceps'},{n:'Sentadilla goblet con mancuerna',w:'Más fácil · menor carga máxima'},{n:'Prensa bilateral pie alto',w:'Sin carga axial · foco glúteo'}]},
+        {n:'Prensa a una pierna',d:'3 series · 10-12 reps c/pierna',t:'Bajar en 3 seg · sin bloquear rodilla',f:'Serie 3 al fallo',
+          alts:[{n:'Prensa bilateral',w:'Más carga total'},{n:'Zancada caminando con mancuernas',w:'Más dinámica · mismo patrón unilateral'},{n:'Step up con mancuernas',w:'Menos tensión en rodilla'}]},
+        {n:'Extensión cuádriceps unilateral',d:'3 series · 12-15 reps c/pierna',t:'Contraer 2 seg · bajar en 3',f:'Última serie al fallo',
+          alts:[{n:'Extensión cuádriceps bilateral',w:'Más carga total'},{n:'Sentadilla isométrica en pared',w:'Sin máquina · alta activación'},{n:'Patada frontal en polea baja',w:'Cadena abierta · cuádriceps'}]},
+        {n:'Extensión cadera en polea (rodilla flex.)',d:'3 series · 12-15 reps c/pierna',t:'Foco glúteo mayor · sin hiperextender',f:'Cerca del fallo',
+          alts:[{n:'Patada sprinter en polea',w:'Rodilla más extendida · variante'},{n:'Patada glúteo estándar en polea',w:'Clásica · fácil de ejecutar'},{n:'Donkey kick con tobillera',w:'Sin polea · en colchoneta'}]},
+        {n:'Abducción en máquina',d:'3 series · 15-20 reps',t:'Peso moderado · foco en contracción',f:'Última serie al fallo',
+          alts:[{n:'Abducción en polea baja de pie',w:'Tensión constante'},{n:'Patada lateral en polea',w:'Más rango de movimiento'},{n:'Sentadilla sumo liviana',w:'Aductores y glúteo medio'}]}
+      ]},
+      jue:{label:'Hombros y tríceps',exs:[
+        {n:'Press Arnold con mancuernas',d:'3 series · 10-12 reps',t:'Rango completo · sin bloquear arriba',f:'Últimas 2 series al fallo técnico',
+          alts:[{n:'Press militar con mancuernas',w:'Más simple · más carga'},{n:'Press militar en Smith',w:'Más estabilidad · progresión clara'},{n:'Press en máquina de hombros',w:'Más volumen · más seguro'}]},
+        {n:'Elevaciones laterales en polea baja',d:'3 series · 12-15 reps c/brazo',t:'Tensión constante · codo ligeramente flex.',f:'Serie 3 al fallo',
+          alts:[{n:'Elevaciones laterales con mancuerna sentada',w:'Más clásico · más carga'},{n:'Elevaciones laterales de pie',w:'Más rango de movimiento'},{n:'Elevaciones unilateral apoyada',w:'Sin impulso · más aislamiento'}]},
+        {n:'Pájaros con mancuernas inclinado',d:'3 series · 12-15 reps',t:'Bajar en 3 seg · contraer 1 seg arriba',f:'Cerca del fallo',
+          alts:[{n:'Peck deck inverso',w:'Más estabilidad · más carga'},{n:'Reverse fly en polea cruzada',w:'Tensión constante'},{n:'Face pull en polea',w:'Deltoides posterior + manguito'}]},
+        {n:'Fondos en banco',d:'3 series · 10-15 reps',t:'Bajar en 3 seg · codos hacia atrás',f:'Última serie al fallo',
+          alts:[{n:'Fondos en banco con peso (disco)',w:'Más desafío cuando las reps son fáciles'},{n:'Extensión tríceps sobre cabeza en polea',w:'Estira el tríceps largo'},{n:'Press francés con mancuernas',w:'Más control individual'}]},
+        {n:'Extensión tríceps polea alta con cuerda',d:'3 series · 12-15 reps',t:'Separar la cuerda abajo · contraer 1 seg',f:'Última serie al fallo',
+          alts:[{n:'Extensión tríceps con barra V',w:'Más carga posible'},{n:'Extensión tríceps unilateral en polea',w:'Más aislamiento'},{n:'Patada de tríceps con mancuerna',w:'Aislamiento completo · menos carga'}]}
+      ]},
+      vie:{label:'Glúteo liviano · core · complemento',exs:[
+        {n:'Hip thrust con mancuerna en banco',d:'3 series · 12-15 reps',t:'Pausa 2 seg arriba',
+          alts:[{n:'Puente de glúteo en suelo con disco',w:'Sin banco · misma activación'},{n:'Hip thrust en Smith liviano',w:'Menos carga que el lunes'},{n:'Elevación de cadera unilateral',w:'Unilateral · corrige asimetrías'}]},
+        {n:'Prensa a una pierna',d:'2 series · 15 reps c/pierna',t:'Peso liviano · foco en glúteo',
+          alts:[{n:'Zancada reversa con mancuernas',w:'Menos impacto en rodilla'},{n:'Step up con mancuernas liviano',w:'Mismo patrón · menos carga'},{n:'Sentadilla búlgara liviana',w:'Unilateral · glúteo y cuádriceps'}]},
+        {n:'Abducción en máquina',d:'3 series · 20 reps',t:'Contracción lenta',
+          alts:[{n:'Patada lateral en polea baja',w:'Más rango que la máquina'},{n:'Abducción en polea de pie',w:'Tensión constante'},{n:'Sentadilla sumo liviana',w:'Aductores y glúteo medio'}]},
+        {n:'Crunch en polea',d:'3 series · 12-15 reps',t:'Contraer 2 seg abajo',
+          alts:[{n:'Rueda de abdominales',w:'Más exigente · core completo'},{n:'Plancha con alcance',w:'Core antirotación · sin equipo'},{n:'Dead bug',w:'Core profundo · estabilidad lumbar'}]},
+        {n:'Remo con mancuerna a una mano',d:'3 series · 12 reps c/brazo',t:'Liviano · cierre de sesión',
+          alts:[{n:'Remo en polea baja a una mano',w:'Tensión constante'},{n:'Pullover con mancuerna en banco',w:'Dorsal en rango largo'},{n:'Jalón en polea a una mano',w:'Foco en dorsal'}]}
+      ]}
+    }
+  },
+  oct:{label:'Oct',sub:'Rotación',badge:'rot',
+    note:'El cuerpo ya adaptó septiembre. Ejercicios nuevos, mismo principio de fallo real. El estímulo diferente es lo que genera nueva hipertrofia.',
+    days:{
+      lun:{label:'Glúteos e isquios',exs:[
+        {n:'Hip thrust con barra (pausa 3 seg)',d:'4 series · 6-8 reps',t:'Pausa 3 seg arriba · bajar en 3',f:'Últimas 2 series al fallo técnico',
+          alts:[{n:'Hip thrust en Smith',w:'Volvés a septiembre con más peso'},{n:'Hip thrust con mancuerna en banco',w:'Si barra ocupada'},{n:'Puente de glúteo unilateral',w:'Más exigente · sin carga extra'}]},
+        {n:'Buenos días con barra',d:'3 series · 8-10 reps',t:'Bajar en 4 seg · espalda neutra',f:'Serie 3 al fallo',
+          alts:[{n:'PMR con barra',w:'Más clásico · isquios dominante'},{n:'PMR con mancuernas',w:'Vuelta a sep con más peso'},{n:'Hip hinge en polea baja',w:'Tensión constante · amigable con espalda'}]},
+        {n:'Curl femoral bilateral en máquina',d:'3 series · 10-12 reps',t:'Contraer 2 seg · bajar en 4',f:'Cerca del fallo',
+          alts:[{n:'Curl femoral unilateral',w:'Más foco por pierna'},{n:'Curl nórdico asistido',w:'Excéntrico muy potente'},{n:'Peso muerto a una pierna',w:'Funcional · isquio y glúteo'}]},
+        {n:'Prensa a una pierna (pie alto — isquio)',d:'3 series · 10-12 reps c/pierna',t:'Bajar en 3 seg · pie en parte alta',f:'Serie 3 al fallo',
+          alts:[{n:'Prensa bilateral pie alto',w:'Más carga total'},{n:'Step up con mancuernas',w:'Menos tensión en rodilla'},{n:'Búlgara con mancuernas',w:'Unilateral · glúteo y cuádriceps'}]},
+        {n:'Patada de glúteo en polea (rodilla flex.)',d:'3 series · 12-15 reps c/pierna',t:'Sin impulso · foco en contracción',f:'Última serie al fallo',
+          alts:[{n:'Patada sprinter en polea',w:'Rodilla más extendida'},{n:'Extensión cadera en máquina',w:'Más carga'},{n:'Patada en colchoneta con tobillera',w:'Sin polea · 3 variantes'}]}
+      ]},
+      mar:{label:'Espalda y bíceps',exs:[
+        {n:'Jalón en polea agarre neutro cerrado',d:'4 series · 8-10 reps',t:'Bajar en 2 · contraer 2 seg abajo',f:'Últimas 2 series al fallo',
+          alts:[{n:'Jalón agarre supino',w:'Vuelta a sep con más peso'},{n:'Jalón agarre prono',w:'Más dorsal ancho'},{n:'Dominada asistida',w:'Peso corporal · mismo patrón'}]},
+        {n:'Remo en máquina sentado agarre ancho',d:'3 series · 10-12 reps',t:'Codos hacia afuera · foco trapecio',f:'Serie 3 al fallo',
+          alts:[{n:'Remo en polea sentado agarre ancho',w:'Sin máquina · misma activación'},{n:'Remo en polea alta agarre ancho',w:'Ángulo diferente'},{n:'Remo con barra',w:'Más carga · espalda media'}]},
+        {n:'Pullover en polea alta con cuerda',d:'3 series · 12-15 reps',t:'Brazos extendidos · rango completo',f:'Cerca del fallo',
+          alts:[{n:'Pullover con mancuerna en banco',w:'Más control · rango completo'},{n:'Pullover en polea baja',w:'Ángulo diferente'},{n:'Jalón a una mano en polea',w:'Unilateral · más foco'}]},
+        {n:'Peck deck inverso',d:'3 series · 12-15 reps',t:'Contraer 2 seg atrás',f:'Serie 3 al fallo',
+          alts:[{n:'Pájaros con mancuernas inclinado',w:'Más rango de movimiento'},{n:'Reverse fly en polea cruzada',w:'Tensión constante'},{n:'Face pull en polea',w:'Deltoides posterior + salud articular'}]},
+        {n:'Curl con mancuernas inclinado en banco',d:'3 series · 10-12 reps',t:'Bajar en 3 seg · estira bíceps completo',f:'Última serie al fallo',
+          alts:[{n:'Curl en polea baja con barra',w:'Vuelta a sep con más peso'},{n:'Curl concentrado',w:'Máximo aislamiento'},{n:'Curl con barra Z',w:'Menos tensión en muñeca'}]}
+      ]},
+      mie:{label:'Cuádriceps y glúteos',exs:[
+        {n:'Búlgara con mancuernas con pausa',d:'4 series · 8-10 reps c/pierna',t:'Pausa 2 seg abajo · subir explosivo',f:'Últimas 2 series al fallo',
+          alts:[{n:'Búlgara sin pausa',w:'Más carga sin el freno'},{n:'Zancada caminando con mancuernas',w:'Más dinámica'},{n:'Step up con mancuernas',w:'Menos tensión en rodilla'}]},
+        {n:'Prensa bilateral pie alto (foco glúteo)',d:'3 series · 10-12 reps',t:'Bajar en 3 seg · no bloquear rodilla',f:'Serie 3 al fallo',
+          alts:[{n:'Prensa a una pierna',w:'Vuelta a sep con más peso'},{n:'Prensa bilateral pie bajo',w:'Más cuádriceps'},{n:'Sentadilla hack en Smith',w:'Vuelta a sep con más peso'}]},
+        {n:'Extensión cuádriceps bilateral',d:'3 series · 12-15 reps',t:'Contraer 2 seg · bajar en 4',f:'Última serie al fallo',
+          alts:[{n:'Extensión cuádriceps unilateral',w:'Más foco por pierna'},{n:'Sentadilla isométrica en pared',w:'Sin máquina'},{n:'Patada frontal en polea',w:'Cadena abierta'}]},
+        {n:'Hip thrust en Smith stance amplio',d:'3 series · 10-12 reps',t:'Contraer 2 seg · bajar en 3',f:'Cerca del fallo',
+          alts:[{n:'Hip thrust con barra',w:'Más carga posible'},{n:'Hip thrust con mancuerna en banco',w:'Más liviano'},{n:'Puente de glúteo unilateral',w:'Sin carga · activación alta'}]},
+        {n:'Abducción en máquina',d:'3 series · 12-15 reps',t:'Contraer 2 seg en cada rep',f:'Última serie al fallo',
+          alts:[{n:'Abducción en polea de pie',w:'Tensión constante'},{n:'Patada lateral en polea',w:'Más rango'},{n:'Sentadilla sumo liviana',w:'Aductores y glúteo medio'}]}
+      ]},
+      jue:{label:'Hombros y tríceps',exs:[
+        {n:'Press militar con mancuernas',d:'3 series · 8-10 reps',t:'Bajar en 3 seg · sin bloquear arriba',f:'Últimas 2 series al fallo',
+          alts:[{n:'Press Arnold',w:'Vuelta a sep con más peso'},{n:'Press militar en Smith',w:'Más estabilidad'},{n:'Press en máquina de hombros',w:'Más volumen'}]},
+        {n:'Elevaciones laterales con mancuerna sentada',d:'3 series · 12-15 reps',t:'Subir en 2 · bajar en 3',f:'Serie 3 al fallo',
+          alts:[{n:'Elevaciones laterales en polea baja',w:'Tensión constante'},{n:'Elevaciones de pie',w:'Más rango'},{n:'Elevaciones unilateral apoyada',w:'Sin impulso'}]},
+        {n:'Face pull en polea con cuerda',d:'3 series · 12-15 reps',t:'Contraer 2 seg atrás',f:'Cerca del fallo',
+          alts:[{n:'Pájaros con mancuernas inclinado',w:'Vuelta a sep con más peso'},{n:'Peck deck inverso',w:'Más estabilidad'},{n:'Reverse fly en polea cruzada',w:'Tensión constante'}]},
+        {n:'Extensión tríceps sobre cabeza en polea',d:'3 series · 12-15 reps',t:'Bajar en 3 seg · estira tríceps largo',f:'Última serie al fallo',
+          alts:[{n:'Press francés con mancuernas',w:'Más control individual'},{n:'Extensión con cuerda arriba',w:'Vuelta a sep con más peso'},{n:'Extensión unilateral sobre cabeza',w:'Más aislamiento'}]},
+        {n:'Fondos en banco con peso (disco)',d:'3 series · 10-12 reps',t:'Bajar en 3 seg · disco en piernas',f:'Última serie al fallo',
+          alts:[{n:'Fondos sin peso',w:'Vuelta a sep con más reps'},{n:'Press francés con mancuernas',w:'Más control individual'},{n:'Extensión con cuerda arriba',w:'Más rango'}]}
+      ]},
+      vie:{label:'Glúteo liviano · core · complemento',exs:[
+        {n:'Hip thrust en Smith liviano',d:'3 series · 15 reps',t:'Pausa 2 seg arriba',
+          alts:[{n:'Hip thrust con mancuerna en banco',w:'Sin Smith'},{n:'Puente de glúteo en suelo',w:'Sin equipo'},{n:'Elevación de cadera unilateral',w:'Unilateral · corrige asimetrías'}]},
+        {n:'Curl femoral unilateral',d:'2 series · 15 reps c/pierna',t:'Bajar en 3 seg',
+          alts:[{n:'Curl femoral bilateral liviano',w:'Más carga total'},{n:'Peso muerto a una pierna sin carga',w:'Activación sin fatiga'},{n:'Hip hinge con banda liviana',w:'Patrón bisagra suave'}]},
+        {n:'Abducción en máquina',d:'3 series · 20 reps',t:'Contracción lenta',
+          alts:[{n:'Patada lateral en polea',w:'Más rango'},{n:'Abducción en polea de pie',w:'Tensión constante'},{n:'Sentadilla sumo liviana',w:'Aductores y glúteo medio'}]},
+        {n:'Crunch en polea',d:'3 series · 12-15 reps',t:'Contraer 2 seg abajo',
+          alts:[{n:'Rueda de abdominales',w:'Más exigente'},{n:'Plancha con alcance',w:'Core antirotación'},{n:'Dead bug',w:'Core profundo'}]},
+        {n:'Pullover con mancuerna en banco',d:'3 series · 12 reps',t:'Rango completo · dorsal',
+          alts:[{n:'Remo con mancuerna a una mano',w:'Vuelta a sep con más peso'},{n:'Pullover en polea alta',w:'Tensión constante'},{n:'Jalón a una mano en polea',w:'Más foco en dorsal'}]}
+      ]}
+    }
+  },
+  nov:{label:'Nov',sub:'Fuerza',badge:'fuerza',deload:true,
+    note:'Menos reps, más peso. Descanso de 2-3 min entre series en compuestos. Objetivo: establecer nuevos máximos. La última serie de los compuestos va al fallo técnico real.',
+    days:{
+      lun:{label:'Glúteos e isquios — máximos',exs:[
+        {n:'Hip thrust en Smith',d:'5 series · 5-6 reps',t:'Peso máximo con tempo',f:'Serie 4 y 5 al fallo técnico',
+          alts:[{n:'Hip thrust con barra',w:'Más carga posible'},{n:'Hip thrust en Smith con pausa',w:'Pausa 3 seg arriba'},{n:'Hip thrust bilateral con barra + pausa',w:'Máximo estímulo'}]},
+        {n:'PMR con mancuernas',d:'4 series · 6-8 reps',t:'Máximo peso · bajar en 4 seg',f:'Serie 3 y 4 al fallo',
+          alts:[{n:'PMR con barra',w:'Mayor carga absoluta'},{n:'Buenos días con barra',w:'Mismo patrón · más espalda'},{n:'PMR unilateral con mancuerna',w:'Más foco por pierna'}]},
+        {n:'Curl femoral unilateral',d:'3 series · 8-10 reps',f:'Cerca del fallo',
+          alts:[{n:'Curl femoral bilateral',w:'Más carga total'},{n:'Curl nórdico asistido',w:'Excéntrico muy potente'},{n:'Peso muerto a una pierna cargado',w:'Funcional · isquio y glúteo'}]},
+        {n:'Abducción en máquina',d:'4 series · 10-12 reps',f:'Serie 3 y 4 al fallo',
+          alts:[{n:'Abducción en polea de pie',w:'Tensión constante'},{n:'Patada lateral en polea',w:'Más rango'},{n:'Sentadilla sumo pesada',w:'Aductores y glúteo medio'}]},
+        {n:'Patada sprinter en polea',d:'3 series · 8-10 reps',f:'Última serie al fallo',
+          alts:[{n:'Patada glúteo estándar',w:'Más fácil de ejecutar'},{n:'Extensión cadera en máquina',w:'Más carga'},{n:'Patada con rodilla flexionada',w:'Más glúteo mayor'}]}
+      ]},
+      mar:{label:'Espalda y bíceps — máximos',exs:[
+        {n:'Jalón en polea agarre supino',d:'5 series · 5-6 reps',t:'Peso máximo con técnica',f:'Serie 4 y 5 al fallo',
+          alts:[{n:'Jalón agarre neutro',w:'Posición más cómoda'},{n:'Jalón agarre prono',w:'Más dorsal ancho'},{n:'Dominada asistida',w:'Peso corporal progresivo'}]},
+        {n:'Remo con barra',d:'4 series · 6-8 reps',f:'Serie 3 y 4 al fallo',
+          alts:[{n:'Remo con mancuerna a dos manos en banco',w:'Menos carga lumbar'},{n:'Remo en máquina Hammer Strength',w:'Más seguro en espalda'},{n:'Remo en polea baja agarre ancho',w:'Trapecio medio'}]},
+        {n:'Remo con mancuerna a una mano',d:'3 series · 8-10 reps',f:'Cerca del fallo',
+          alts:[{n:'Remo en polea baja a una mano',w:'Tensión constante'},{n:'Remo en máquina unilateral',w:'Más estabilidad'},{n:'Remo con mancuerna apoyado en banco',w:'Más rango'}]},
+        {n:'Peck deck inverso',d:'3 series · 10-12 reps',f:'Serie 3 al fallo',
+          alts:[{n:'Pájaros con mancuernas',w:'Más rango'},{n:'Reverse fly en polea',w:'Tensión constante'},{n:'Face pull con cuerda',w:'Deltoides posterior + manguito'}]},
+        {n:'Curl en polea baja',d:'3 series · 8-10 reps',f:'Última serie al fallo',
+          alts:[{n:'Curl con barra Z',w:'Menos tensión en muñeca'},{n:'Curl concentrado',w:'Máximo aislamiento'},{n:'Curl inclinado en banco',w:'Más rango y estiramiento'}]}
+      ]},
+      mie:{label:'Cuádriceps y glúteos — máximos',exs:[
+        {n:'Sentadilla hack en Smith',d:'5 series · 5-6 reps',t:'Peso máximo con pausa abajo',f:'Serie 4 y 5 al fallo',
+          alts:[{n:'Sentadilla en Smith normal',w:'Posición más cómoda'},{n:'Prensa bilateral',w:'Sin carga axial'},{n:'Búlgara pesada',w:'Unilateral · más glúteo'}]},
+        {n:'Prensa a una pierna',d:'4 series · 8-10 reps',f:'Serie 3 y 4 al fallo',
+          alts:[{n:'Prensa bilateral',w:'Más carga total'},{n:'Búlgara con mancuernas',w:'Más inestabilidad'},{n:'Step up cargado',w:'Más glúteo · menos cuádriceps'}]},
+        {n:'Extensión cuádriceps unilateral',d:'3 series · 10-12 reps',f:'Última serie al fallo',
+          alts:[{n:'Extensión bilateral',w:'Más carga total'},{n:'Sentadilla isométrica en pared',w:'Sin máquina'},{n:'Patada frontal en polea',w:'Cadena abierta'}]},
+        {n:'Hip thrust en Smith',d:'3 series · 8-10 reps',f:'Cerca del fallo',
+          alts:[{n:'Hip thrust con barra',w:'Más carga posible'},{n:'Hip thrust con pausa larga',w:'3 seg arriba · más estímulo'},{n:'Puente de glúteo unilateral',w:'Sin carga · activación alta'}]},
+        {n:'Abducción en máquina',d:'3 series · 10-12 reps',f:'Última serie al fallo',
+          alts:[{n:'Abducción en polea de pie',w:'Tensión constante'},{n:'Patada lateral en polea',w:'Más rango'},{n:'Sentadilla sumo pesada',w:'Aductores y glúteo medio'}]}
+      ]},
+      jue:{label:'Hombros y tríceps — máximos',exs:[
+        {n:'Press Arnold',d:'4 series · 6-8 reps',f:'Serie 3 y 4 al fallo',
+          alts:[{n:'Press militar con mancuernas',w:'Más carga'},{n:'Press en Smith',w:'Más estabilidad'},{n:'Press en máquina',w:'Más volumen seguro'}]},
+        {n:'Elevaciones laterales en polea',d:'3 series · 10-12 reps',f:'Serie 3 al fallo',
+          alts:[{n:'Elevaciones con mancuerna sentada',w:'Más carga'},{n:'Elevaciones de pie',w:'Más rango'},{n:'Elevaciones unilateral apoyada',w:'Sin impulso'}]},
+        {n:'Pájaros con mancuernas',d:'3 series · 10-12 reps',f:'Cerca del fallo',
+          alts:[{n:'Peck deck inverso',w:'Más carga'},{n:'Face pull con cuerda',w:'Deltoides posterior + manguito'},{n:'Reverse fly en polea',w:'Tensión constante'}]},
+        {n:'Fondos en banco con peso',d:'4 series · 8-10 reps',f:'Serie 3 y 4 al fallo',
+          alts:[{n:'Fondos sin peso',w:'Más reps · sin carga extra'},{n:'Extensión sobre cabeza en polea',w:'Más rango'},{n:'Press francés con mancuernas',w:'Más control'}]},
+        {n:'Extensión tríceps sobre cabeza en polea',d:'3 series · 10-12 reps',f:'Última serie al fallo',
+          alts:[{n:'Extensión con cuerda abajo',w:'Más clásico'},{n:'Extensión unilateral',w:'Más aislamiento'},{n:'Patada de tríceps con mancuerna',w:'Sin polea'}]}
+      ]},
+      vie:{label:'Glúteo liviano — semana de fuerza',exs:[
+        {n:'Hip thrust con mancuerna en banco',d:'3 series · 12 reps',t:'Recuperación activa · no al fallo',
+          alts:[{n:'Puente de glúteo en suelo',w:'Sin banco'},{n:'Hip thrust en Smith muy liviano',w:'Más estabilidad'},{n:'Elevación de cadera unilateral',w:'Unilateral · sin carga'}]},
+        {n:'Abducción en máquina',d:'3 series · 15 reps',t:'Peso moderado · recuperación',
+          alts:[{n:'Patada lateral en polea liviana',w:'Más rango'},{n:'Abducción en polea de pie liviana',w:'Tensión constante'},{n:'Sentadilla sumo muy liviana',w:'Movilidad'}]},
+        {n:'Curl femoral unilateral',d:'2 series · 12 reps c/pierna',t:'Sin llegar al fallo',
+          alts:[{n:'Curl bilateral liviano',w:'Más carga total'},{n:'Peso muerto a una pierna sin carga',w:'Activación sin fatiga'},{n:'Hip hinge liviano',w:'Movilidad de cadera'}]},
+        {n:'Crunch en polea',d:'3 series · 12 reps',t:'Core liviano',
+          alts:[{n:'Plancha estática',w:'Sin movimiento · estabilidad'},{n:'Dead bug',w:'Core profundo'},{n:'Plancha con alcance',w:'Antirotación'}]},
+        {n:'Remo con mancuerna a una mano',d:'2 series · 12 reps c/brazo',t:'Muy liviano · cierre',
+          alts:[{n:'Remo en polea baja liviano',w:'Tensión constante'},{n:'Pullover con mancuerna liviano',w:'Dorsal en rango largo'},{n:'Jalón a una mano liviano',w:'Foco en dorsal'}]}
+      ]}
+    }
+  },
+  dic:{label:'Dic',sub:'Cierre',badge:'cierre',eval:true,
+    note:'Vuelta a septiembre con los pesos de noviembre. La diferencia va a ser visible. Semana 4: nueva antropometría con Marina.',
+    days:{
+      lun:{label:'Glúteos e isquios — resultados',exs:[
+        {n:'Hip thrust en Smith',d:'4 series · 8-10 reps',t:'Mismo tempo de sep · peso de nov',f:'Últimas 2 series al fallo',goal:'Meta: +10-15kg vs septiembre',
+          alts:[{n:'Hip thrust con barra',w:'Más carga posible'},{n:'Hip thrust con mancuerna en banco',w:'Si Smith ocupado'},{n:'Puente de glúteo con pausa larga',w:'3 seg arriba'}]},
+        {n:'PMR con mancuernas',d:'3 series · 8-10 reps',t:'Bajar en 4 seg',f:'Serie 3 al fallo',goal:'Meta: 22-24kg cada mano',
+          alts:[{n:'PMR con barra',w:'Mayor carga absoluta'},{n:'Buenos días con barra',w:'Mismo patrón'},{n:'Hip hinge en polea',w:'Tensión constante'}]},
+        {n:'Curl femoral unilateral en máquina',d:'3 series · 10-12 reps c/pierna',t:'Contraer 2 seg · bajar en 3',f:'Cerca del fallo',
+          alts:[{n:'Curl bilateral',w:'Más carga total'},{n:'Curl nórdico asistido',w:'Excéntrico potente'},{n:'Peso muerto a una pierna',w:'Funcional'}]},
+        {n:'Abducción en máquina',d:'3 series · 10-12 reps',t:'Contraer 2 seg',f:'Serie 3 al fallo',goal:'Meta: 70-75kg',
+          alts:[{n:'Abducción en polea',w:'Tensión constante'},{n:'Patada lateral en polea',w:'Más rango'},{n:'Sentadilla sumo pesada',w:'Aductores y glúteo medio'}]},
+        {n:'Patada sprinter en polea',d:'3 series · 10-12 reps c/pierna',t:'Sin impulso · controlado',f:'Última serie al fallo',
+          alts:[{n:'Patada glúteo estándar',w:'Más fácil'},{n:'Extensión cadera en máquina',w:'Más carga'},{n:'Patada con rodilla flex.',w:'Más glúteo mayor'}]}
+      ]},
+      mar:{label:'Espalda y bíceps — resultados',exs:[
+        {n:'Jalón en polea agarre supino',d:'4 series · 8-10 reps',t:'Contraer 1 seg abajo',f:'Últimas 2 series al fallo',goal:'Meta: 40-45kg',
+          alts:[{n:'Jalón agarre neutro',w:'Posición más cómoda'},{n:'Jalón agarre prono',w:'Más dorsal ancho'},{n:'Dominada asistida',w:'Peso corporal'}]},
+        {n:'Remo en polea alta agarre supino',d:'3 series · 10-12 reps',t:'Codo pegado · contraer atrás',f:'Serie 3 al fallo',
+          alts:[{n:'Remo en polea alta agarre prono',w:'Varía ángulo'},{n:'Remo en polea baja',w:'Ángulo diferente'},{n:'Remo en máquina',w:'Más estabilidad'}]},
+        {n:'Remo con mancuerna a una mano',d:'3 series · 10-12 reps c/brazo',t:'Rango completo',f:'Cerca del fallo',
+          alts:[{n:'Remo en polea baja a una mano',w:'Tensión constante'},{n:'Remo apoyado en banco',w:'Más rango'},{n:'Remo en máquina unilateral',w:'Más estabilidad'}]},
+        {n:'Peck deck inverso',d:'3 series · 12-15 reps',t:'Contraer 2 seg atrás',f:'Serie 3 al fallo',
+          alts:[{n:'Pájaros con mancuernas',w:'Más rango'},{n:'Reverse fly en polea',w:'Tensión constante'},{n:'Face pull con cuerda',w:'Deltoides posterior + manguito'}]},
+        {n:'Curl en polea baja con barra',d:'3 series · 10-12 reps',t:'Bajar en 3 seg',f:'Última serie al fallo',
+          alts:[{n:'Curl con barra Z',w:'Menos tensión en muñeca'},{n:'Curl alterno con mancuernas',w:'Unilateral'},{n:'Curl concentrado',w:'Máximo aislamiento'}]}
+      ]},
+      mie:{label:'Cuádriceps y glúteos — resultados',exs:[
+        {n:'Sentadilla hack en Smith stance amplio',d:'4 series · 8-10 reps',t:'Bajar en 3 · pausa abajo',f:'Últimas 2 series al fallo',goal:'Meta: 65-75kg',
+          alts:[{n:'Sentadilla en Smith normal',w:'Más cómoda'},{n:'Prensa bilateral',w:'Sin carga axial'},{n:'Búlgara pesada',w:'Más glúteo'}]},
+        {n:'Prensa a una pierna',d:'3 series · 10-12 reps c/pierna',t:'Bajar en 3 seg',f:'Serie 3 al fallo',
+          alts:[{n:'Prensa bilateral',w:'Más carga total'},{n:'Búlgara con mancuernas',w:'Más inestabilidad'},{n:'Step up cargado',w:'Más glúteo'}]},
+        {n:'Extensión cuádriceps unilateral',d:'3 series · 12-15 reps c/pierna',t:'Contraer 2 seg · bajar en 3',f:'Última serie al fallo',
+          alts:[{n:'Extensión bilateral',w:'Más carga total'},{n:'Sentadilla isométrica en pared',w:'Sin máquina'},{n:'Patada frontal en polea',w:'Cadena abierta'}]},
+        {n:'Extensión cadera en polea (rodilla flex.)',d:'3 series · 12-15 reps c/pierna',t:'Foco glúteo mayor',f:'Cerca del fallo',
+          alts:[{n:'Patada sprinter en polea',w:'Rodilla más extendida'},{n:'Patada glúteo estándar',w:'Más fácil'},{n:'Donkey kick con tobillera',w:'Sin polea'}]},
+        {n:'Abducción en máquina',d:'3 series · 15-20 reps',t:'Contracción lenta',f:'Última serie al fallo',
+          alts:[{n:'Abducción en polea',w:'Tensión constante'},{n:'Patada lateral en polea',w:'Más rango'},{n:'Sentadilla sumo',w:'Aductores y glúteo medio'}]}
+      ]},
+      jue:{label:'Hombros y tríceps — resultados',exs:[
+        {n:'Press Arnold con mancuernas',d:'3 series · 10-12 reps',t:'Rango completo',f:'Últimas 2 series al fallo',
+          alts:[{n:'Press militar con mancuernas',w:'Más carga'},{n:'Press en Smith',w:'Más estabilidad'},{n:'Press en máquina',w:'Más volumen'}]},
+        {n:'Elevaciones laterales en polea baja',d:'3 series · 12-15 reps c/brazo',t:'Tensión constante',f:'Serie 3 al fallo',
+          alts:[{n:'Elevaciones con mancuerna sentada',w:'Más carga'},{n:'Elevaciones de pie',w:'Más rango'},{n:'Elevaciones unilateral apoyada',w:'Sin impulso'}]},
+        {n:'Pájaros con mancuernas inclinado',d:'3 series · 12-15 reps',t:'Bajar en 3 · contraer arriba',f:'Cerca del fallo',
+          alts:[{n:'Peck deck inverso',w:'Más carga'},{n:'Reverse fly en polea',w:'Tensión constante'},{n:'Face pull con cuerda',w:'Deltoides posterior'}]},
+        {n:'Fondos en banco',d:'3 series · 10-15 reps',t:'Bajar en 3 seg',f:'Última serie al fallo',
+          alts:[{n:'Fondos con peso',w:'Más desafío'},{n:'Extensión sobre cabeza en polea',w:'Más rango'},{n:'Press francés con mancuernas',w:'Más control'}]},
+        {n:'Extensión tríceps polea alta con cuerda',d:'3 series · 12-15 reps',t:'Separar cuerda abajo · contraer',f:'Última serie al fallo',
+          alts:[{n:'Extensión con barra V',w:'Más carga'},{n:'Extensión unilateral',w:'Más aislamiento'},{n:'Patada de tríceps',w:'Sin polea'}]}
+      ]},
+      vie:{label:'Glúteo liviano · core · complemento',exs:[
+        {n:'Hip thrust con mancuerna en banco',d:'3 series · 12-15 reps',t:'Pausa 2 seg arriba',
+          alts:[{n:'Puente de glúteo en suelo',w:'Sin banco'},{n:'Hip thrust en Smith liviano',w:'Más estabilidad'},{n:'Elevación de cadera unilateral',w:'Unilateral'}]},
+        {n:'Prensa a una pierna',d:'2 series · 15 reps c/pierna',t:'Liviano · foco en glúteo',
+          alts:[{n:'Zancada reversa liviana',w:'Menos impacto en rodilla'},{n:'Step up liviano',w:'Mismo patrón'},{n:'Búlgara muy liviana',w:'Unilateral'}]},
+        {n:'Abducción en máquina',d:'3 series · 20 reps',t:'Contracción lenta',
+          alts:[{n:'Patada lateral en polea',w:'Más rango'},{n:'Abducción en polea',w:'Tensión constante'},{n:'Sentadilla sumo liviana',w:'Aductores'}]},
+        {n:'Crunch en polea',d:'3 series · 12-15 reps',t:'Contraer 2 seg abajo',
+          alts:[{n:'Rueda de abdominales',w:'Más exigente'},{n:'Plancha con alcance',w:'Antirotación'},{n:'Dead bug',w:'Core profundo'}]},
+        {n:'Remo con mancuerna a una mano',d:'3 series · 12 reps c/brazo',t:'Liviano · cierre',
+          alts:[{n:'Remo en polea baja liviano',w:'Tensión constante'},{n:'Pullover con mancuerna',w:'Dorsal'},{n:'Jalón a una mano liviano',w:'Foco en dorsal'}]}
+      ]}
+    }
+  }
+};
+
+const DAYS_ORDER=['lun','mar','mie','jue','vie'];
+const DAY_META={lun:{n:'Lun',f:'Glúteos'},mar:{n:'Mar',f:'Espalda'},mie:{n:'Mié',f:'Cuáds'},jue:{n:'Jue',f:'Hombros'},vie:{n:'Vie',f:'Opcional'}};
+const BADGE={base:'badge-base',rot:'badge-rot',fuerza:'badge-fuerza',cierre:'badge-cierre'};
+
+let curTab='plan',curMonth='sep',curDay='lun',openAlt=null;
+let swaps={},permSwaps={};
+
+function setTab(t,el){
+  curTab=t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  ['plan','rutina','cambios'].forEach(v=>{
+    document.getElementById('view-'+v).style.display=v===t?'block':'none';
+  });
+  render();
+}
+
+function setMonth(m,el){
+  curMonth=m;curDay='lun';openAlt=null;
+  document.querySelectorAll('.m-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function setDay(d){curDay=d;openAlt=null;render();}
+
+function toggleAlt(id){openAlt=openAlt===id?null:id;render();}
+
+function doSwap(exId,altName,perm){
+  const day=MONTHS[curMonth].days[curDay];
+  const ex=day.exs.find(e=>e.n===exId);
+  const alt=ex.alts.find(a=>a.n===altName);
+  const key=curMonth+'_'+curDay+'_'+exId;
+  if(perm){
+    permSwaps[key]={display:altName,orig:exId,why:alt.w,day:curDay,month:curMonth};
+    delete swaps[key];
+  } else {
+    if(!permSwaps[key]) swaps[key]={display:altName,orig:exId,why:alt.w,day:curDay,month:curMonth};
+  }
+  openAlt=null;render();
+}
+
+function resetSwap(exId){
+  const key=curMonth+'_'+curDay+'_'+exId;
+  delete swaps[key];delete permSwaps[key];render();
+}
+
+function render(){
+  if(curTab==='plan') renderPlan();
+  else if(curTab==='rutina') renderRutina();
+  else renderCambios();
+}
+
+function renderPlan(){
+  const m=MONTHS[curMonth];
+  const day=m.days[curDay];
+  let h='';
+  h+=`<div class="month-strip">`;
+  Object.entries(MONTHS).forEach(([k,v])=>{
+    h+=`<div class="m-pill${k===curMonth?' active':''}" onclick="setMonth('${k}',this)"><div class="m-name">${v.label}</div><div class="m-sub">${v.sub}</div></div>`;
+  });
+  h+=`</div>`;
+  h+=`<div class="badge-block ${BADGE[m.badge]}">${m.label} — ${m.sub}</div>`;
+  h+=`<div class="month-note">${m.note}</div>`;
+  h+=`<div class="day-strip">`;
+  DAYS_ORDER.forEach(d=>{
+    const meta=DAY_META[d];
+    h+=`<div class="d-pill${d===curDay?' active':''}${d==='vie'?' opt':''}" onclick="setDay('${d}')"><div class="d-name">${meta.n}</div><div class="d-focus">${meta.f}</div></div>`;
+  });
+  h+=`</div>`;
+  h+=`<div class="session-label"><div class="session-dot"></div>${day.label}</div>`;
+  day.exs.forEach((ex,i)=>{
+    const key=curMonth+'_'+curDay+'_'+ex.n;
+    const isPerm=!!permSwaps[key];
+    const isTemp=!!swaps[key]&&!isPerm;
+    const display=isPerm?permSwaps[key].display:isTemp?swaps[key].display:ex.n;
+    const cardClass='ex-card'+(isPerm?' swapped-perm':isTemp?' swapped-temp':'');
+    const badge=isPerm?'<span class="ex-badge badge-perm">Cambio permanente</span>':isTemp?'<span class="ex-badge badge-temp">Solo hoy</span>':'';
+    const isOpen=openAlt===ex.n;
+    let altsH=ex.alts.map(a=>`
+      <div class="alt-row">
+        <div class="alt-info"><div class="alt-name">${a.n}</div><div class="alt-why">${a.w}</div></div>
+        <div class="alt-btns">
+          <button class="btn-hoy" onclick="doSwap('${ex.n}','${a.n.replace(/'/g,"\\'")}',false)">Hoy</button>
+          <button class="btn-siempre" onclick="doSwap('${ex.n}','${a.n.replace(/'/g,"\\'")}',true)">Siempre</button>
+        </div>
+      </div>`).join('');
+    const resetBtn=(isPerm||isTemp)?`<button class="btn-reset" onclick="resetSwap('${ex.n.replace(/'/g,"\\'")}')">Volver al original</button>`:'';
+    h+=`<div class="${cardClass}">
+      <div class="ex-main" onclick="toggleAlt('${ex.n}')">
+        <div class="ex-num">${i+1}</div>
+        <div class="ex-body">
+          <div class="ex-name">${display}</div>
+          <div class="ex-detail">${ex.d||''}</div>
+          ${ex.t?`<div class="ex-tempo">${ex.t}</div>`:''}
+          ${ex.f?`<div class="ex-fallo">⚡ ${ex.f}</div>`:''}
+          ${ex.goal?`<div class="goal">🎯 ${ex.goal}</div>`:''}
+          ${badge}
+        </div>
+        <span class="ex-arrow${isOpen?' open':''}">›</span>
+      </div>
+      <div class="alts-panel${isOpen?' open':''}">
+        <div class="alts-title">Alternativas inteligentes para hoy</div>
+        ${altsH}${resetBtn}
+      </div>
+    </div>`;
+  });
+  if(m.deload){
+    h+=`<div class="deload-card"><div class="deload-title">Semana 4 — descarga obligatoria</div>Solo lunes y miércoles. 2-3 ejercicios por sesión, al 70% del peso, sin llegar al fallo. El cuerpo necesita recuperarse antes de diciembre.</div>`;
+  }
+  if(m.eval){
+    h+=`<div class="eval-card"><div class="deload-title">Semana 4 — evaluación final 🎯</div>Nueva antropometría con Marina. Comparás los números de octubre con los de ahora y planificás el 2026.</div>`;
+  }
+  document.getElementById('view-plan').innerHTML=h;
+}
+
+function renderRutina(){
+  document.getElementById('view-rutina').innerHTML=`<div style="text-align:center;padding:40px 0;color:#888;font-size:14px">Usá la pestaña Plan mensual para ver y gestionar tu rutina del día.</div>`;
+}
+
+function renderCambios(){
+  const perms=Object.values(permSwaps);
+  const temps=Object.entries(swaps).filter(([k])=>!permSwaps[k]).map(([,v])=>v);
+  let h='';
+  h+=`<div class="hist-section-title">Cambios permanentes</div>`;
+  h+=perms.length?perms.map(s=>`<div class="hist-card perm"><div class="hist-day">${s.month.toUpperCase()} · ${s.day.toUpperCase()}</div><div class="hist-name">${s.display}</div><div class="hist-orig">Reemplaza: ${s.orig}</div></div>`).join(''):`<div class="empty">Sin cambios permanentes todavía.</div>`;
+  h+=`<div class="hist-section-title">Cambios temporales (sesión actual)</div>`;
+  h+=temps.length?temps.map(s=>`<div class="hist-card temp"><div class="hist-day">${s.month.toUpperCase()} · ${s.day.toUpperCase()}</div><div class="hist-name">${s.display}</div><div class="hist-orig">Reemplaza: ${s.orig}</div></div>`).join(''):`<div class="empty">Sin cambios temporales hoy.</div>`;
+  document.getElementById('view-cambios').innerHTML=h;
+}
+
+render();
+</script>
+</body>
+</html>
