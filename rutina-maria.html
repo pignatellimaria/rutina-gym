@@ -91,6 +91,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .shome{background:#FEF3C7;color:#92400E}.ssick{background:#FEE2E2;color:#991B1B}
 .strav{background:#E0E7FF;color:#3730A3}.stire{background:#F3F4F6;color:#4B5563}
 .sper{background:#FCE7F3;color:#9D174D}.srest{background:#F5F3FF;color:#5B21B6}
+.smed{background:#ECFDF5;color:#065F46}
+.sunexp{background:#FFF7ED;color:#92400E}
 .snone{background:#f5f5f0;color:#888}
 .spick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
 .spbtn{padding:8px 4px;border-radius:8px;border:1px solid #e5e5e0;cursor:pointer;text-align:center;font-size:11px;font-weight:500;background:#fff}
@@ -207,7 +209,8 @@ var STATUSES = [
   {k:'gym',e:'Gym',c:'sgym'},{k:'tennis',e:'Tenis',c:'sten'},
   {k:'home',e:'Casa',c:'shome'},{k:'sick',e:'Enferma',c:'ssick'},
   {k:'travel',e:'Viaje',c:'strav'},{k:'tired',e:'Cansancio',c:'stire'},
-  {k:'period',e:'Periodo',c:'sper'},{k:'rest',e:'Descanso',c:'srest'}
+  {k:'period',e:'Periodo',c:'sper'},{k:'rest',e:'Descanso',c:'srest'},
+  {k:'medical',e:'Turno medico',c:'smed'},{k:'unexpected',e:'Imprevisto',c:'sunexp'}
 ];
 
 var TDAYS = [1,3,6];
@@ -311,9 +314,16 @@ function navCal(dir) {
 function pickDay(k) { calPickDay = k; renderReg(); }
 
 function setSt(key, st) {
-  if (st === null) delete calSt[key]; else calSt[key] = st;
+  if (st === null) { delete calSt[key]; }
+  else {
+    if (!calSt[key]) calSt[key] = [];
+    var arr = calSt[key];
+    var idx = arr.indexOf(st);
+    if (idx >= 0) arr.splice(idx, 1); else arr.push(st);
+    if (arr.length === 0) delete calSt[key];
+  }
   localStorage.setItem('calSt', JSON.stringify(calSt));
-  calPickDay = null; renderReg();
+  renderReg();
 }
 
 function saveSteps() {
@@ -555,34 +565,24 @@ function renderReg() {
   for (var i=0;i<ks.length;i++) {
     var pts = ks[i].split('-');
     var y=parseInt(pts[0]),m2=parseInt(pts[1]),d=parseInt(pts[2]);
-    if (y===calYear&&m2===calMon) smap[d]=calSt[ks[i]];
+    if (y===calYear&&m2===calMon) {
+      var v = calSt[ks[i]];
+      smap[d] = Array.isArray(v) ? v : [v];
+    }
   }
   var counts = {};
   for (var i=0;i<STATUSES.length;i++) counts[STATUSES[i].k]=0;
   var vs = Object.values(calSt);
-  for (var i=0;i<vs.length;i++) { if (counts[vs[i]]!==undefined) counts[vs[i]]++; }
+  for (var i=0;i<vs.length;i++) {
+    var v = vs[i];
+    if (Array.isArray(v)) { for (var j=0;j<v.length;j++) { if (counts[v[j]]!==undefined) counts[v[j]]++; } }
+    else { if (counts[v]!==undefined) counts[v]++; }
+  }
   var trainDays=(counts.gym||0)+(counts.tennis||0)+(counts.home||0);
   var justDays=(counts.sick||0)+(counts.travel||0)+(counts.tired||0)+(counts.period||0)+(counts.rest||0);
 
-  // Activity for today
   var dow = today.getDay();
-  var log = getMLog();
-  var savedAct = log.activity || '';
   var o = '';
-
-  o += '<div class="tdayhdr"><div class="tdate">' + DNAMES[dow] + ', ' + today.getDate() + ' de ' + MNAMES[today.getMonth()] + '</div>';
-  o += '<div class="tnote">Registra tu actividad de hoy</div></div>';
-  o += '<div class="card" style="padding:14px;margin-bottom:10px">';
-  o += '<div style="font-size:13px;font-weight:600;color:#1a1a18;margin-bottom:8px">Actividad de hoy</div>';
-  o += '<div class="actgrid">';
-  var ao = ACTS[dow] || [];
-  for (var i=0;i<ao.length;i++) {
-    var a=ao[i], ae=esc(a);
-    o += '<button class="actb'+(savedAct===a?' on':'')+'" onclick="selActReg(\'' + ae + '\')">' + a + '</button>';
-  }
-  o += '</div>';
-  if (savedAct) o += '<div style="font-size:11px;color:#1D9E75;margin-top:8px;font-weight:600">Registrado: ' + savedAct + '</div>';
-  o += '</div>';
 
   o += '<div class="card" style="padding:14px">';
   o += '<div class="calhdr"><button class="calnav" onclick="navCal(-1)">&#8249;</button>';
@@ -594,25 +594,33 @@ function renderReg() {
   for (var i=0;i<fd;i++) o += '<div class="calday empty"></div>';
   for (var d=1;d<=dim;d++) {
     var key = calYear+'-'+calMon+'-'+d;
-    var st = smap[d];
-    var stO = null;
-    for (var j=0;j<STATUSES.length;j++) { if (STATUSES[j].k===st) { stO=STATUSES[j]; break; } }
-    var cls = 'calday '+(stO?stO.c:'snone')+(isT(calYear,calMon,d)?' td':'');
+    var sts = smap[d] || [];
+    var mainCls = sts.length > 0 ? STATUSES.filter(function(s){return sts.indexOf(s.k)>=0;})[0] : null;
+    var cls = 'calday '+(mainCls?mainCls.c:'snone')+(isT(calYear,calMon,d)?' td':'');
     var pick = calPickDay===key;
+    var icons = '';
+    for (var j=0;j<sts.length&&j<2;j++) {
+      for (var jj=0;jj<STATUSES.length;jj++) { if (STATUSES[jj].k===sts[j]) { icons += STATUSES[jj].e.charAt(0); break; } }
+    }
     o += '<div class="'+cls+'" onclick="pickDay(\'' + key + '\')" style="'+(pick?'outline:2px solid #1D9E75;outline-offset:1px':'')+'">';
     o += '<span style="font-size:11px;font-weight:600">'+d+'</span>';
-    if (stO) o += '<span>'+stO.e+'</span>';
+    if (icons) o += '<span>'+icons+'</span>';
     o += '</div>';
   }
   o += '</div>';
   if (calPickDay) {
     o += '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Que hiciste este dia?</div>';
+    var dayKey2 = calPickDay;
+    var curSts = calSt[dayKey2] || [];
+    if (!Array.isArray(curSts)) curSts = [curSts];
+    o += '<div style="font-size:11px;color:#888;margin-bottom:6px">Podes seleccionar varios</div>';
     o += '<div class="spick">';
     for (var i=0;i<STATUSES.length;i++) {
       var s=STATUSES[i];
-      o += '<button class="spbtn '+s.c+'" onclick="setSt(\'' + calPickDay + '\',\'' + s.k + '\')">' + s.e + '</button>';
+      var isSel = curSts.indexOf(s.k) >= 0;
+      o += '<button class="spbtn '+s.c+'" onclick="setSt(\'' + dayKey2 + '\',\'' + s.k + '\')" style="'+(isSel?'outline:2px solid #1a1a18;font-weight:700':'')+'">' + (isSel?'✓ ':'') + s.e + '</button>';
     }
-    o += '<button class="spbtn" onclick="setSt(\'' + calPickDay + '\',null)" style="background:#f5f5f0;color:#888">Borrar</button>';
+    o += '<button class="spbtn" onclick="setSt(\'' + dayKey2 + '\',null)" style="background:#f5f5f0;color:#888">Borrar todo</button>';
     o += '</div>';
   }
   o += '<div class="stats">';
@@ -633,13 +641,10 @@ function renderReg() {
   document.getElementById('p-reg').innerHTML = o;
 }
 
-function selActReg(act) {
-  var l = getMLog(); l.activity = act; saveMLog(l); renderReg();
-}
+
 
 window.onload = function() { render(); };
 
 </script>
 </body>
 </html>
-
